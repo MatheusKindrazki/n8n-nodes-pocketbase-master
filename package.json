@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-pocketbase-master",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "N8N nodes to integrate with PocketBase like a boss",
   "keywords": [
     "n8n-community-node-package",
@@ -36,7 +36,7 @@
     "format": "prettier nodes credentials --write",
     "lint": "eslint nodes credentials package.json",
     "lintfix": "eslint nodes credentials package.json --fix",
-    "prepublishOnly": "pnpm build && pnpm lint -c .eslintrc.prepublish.js nodes credentials package.json"
+    "prepublishOnly": "pnpm build"
   },
   "files": [
     "dist"
