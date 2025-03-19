@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=${N8N_PORT:-5678}
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+      - N8N_LOG_LEVEL=debug
+      - N8N_CUSTOM_EXTENSIONS=/home/node/.n8n/custom
+      - N8N_MODULE_RESOLUTION=node16
+      - NODE_OPTIONS=--experimental-specifier-resolution=node
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-America/Sao_Paulo}
+      - TZ=${TZ:-America/Sao_Paulo}
+    volumes:
+      - ~/.n8n:/home/node/.n8n
+      - ./:/home/node/.n8n/custom/n8n-nodes-pocketbase
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - n8n-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --tcp-keepalive 60
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - n8n-network
+
+volumes:
+  redis_data:
+
+networks:
+  n8n-network:
+    driver: bridge

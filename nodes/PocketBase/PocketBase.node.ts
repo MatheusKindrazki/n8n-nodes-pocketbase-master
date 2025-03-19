@@ -6,7 +6,17 @@ import type {
 	IDataObject,
 } from 'n8n-workflow';
 import { NodeOperationError, NodeConnectionType } from 'n8n-workflow';
-import PocketBaseClient from 'pocketbase';
+
+// Definindo a interface para o PocketBaseClient
+interface PocketBaseClient {
+	collection: (name: string) => any;
+	admins: {
+		authWithPassword: (email: string, password: string) => Promise<any>;
+	};
+	authStore: {
+		save: (token: string, model: any) => void;
+	};
+}
 
 export class PocketBase implements INodeType {
 	description: INodeTypeDescription = {
@@ -325,9 +335,14 @@ export class PocketBase implements INodeType {
 		// Get credentials
 		const credentials = await this.getCredentials('pocketBaseApi');
 
+		// Dynamic import of PocketBase
+		const PocketBaseModule = await import('pocketbase');
+		// Get the default export
+		const PocketBaseClient = PocketBaseModule.default || PocketBaseModule;
+
 		// Create client
 		const url = credentials.url as string;
-		const client = new PocketBaseClient(url);
+		const client = new PocketBaseClient(url) as PocketBaseClient;
 
 		// Authenticate if email and password are provided
 		if (credentials.email && credentials.password) {
