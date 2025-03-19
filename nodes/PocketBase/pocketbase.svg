@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100%" height="100%" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 56.3 (81716) - https://sketch.com -->
+    <title>PocketBase</title>
+    <desc>PocketBase Logo</desc>
+    <g id="pocketbase" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <path d="M12,0 C18.627417,0 24,5.372583 24,12 C24,18.627417 18.627417,24 12,24 C5.372583,24 0,18.627417 0,12 C0,5.372583 5.372583,0 12,0 Z M15.5,8 L8.5,8 C7.11928813,8 6,9.11928813 6,10.5 L6,13.5 C6,14.8807119 7.11928813,16 8.5,16 L15.5,16 C16.8807119,16 18,14.8807119 18,13.5 L18,10.5 C18,9.11928813 16.8807119,8 15.5,8 Z M8.5,10 L15.5,10 C15.7761424,10 16,10.2238576 16,10.5 L16,13.5 C16,13.7761424 15.7761424,14 15.5,14 L8.5,14 C8.22385763,14 8,13.7761424 8,13.5 L8,10.5 C8,10.2238576 8.22385763,10 8.5,10 Z" id="Combined-Shape" fill="#16B8F3" fill-rule="nonzero"></path>
+    </g>
+</svg>

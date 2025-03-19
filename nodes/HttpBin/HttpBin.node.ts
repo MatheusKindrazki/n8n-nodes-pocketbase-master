@@ -1,5 +1,5 @@
-import { INodeType, INodeTypeDescription } from 'n8n-workflow';
-import { httpVerbFields, httpVerbOperations } from './HttpVerbDescription';
+import { INodeType, INodeTypeDescription, NodeConnectionType } from 'n8n-workflow';
+import { httpVerbFields } from './HttpVerbDescription';
 
 export class HttpBin implements INodeType {
 	description: INodeTypeDescription = {
@@ -8,55 +8,95 @@ export class HttpBin implements INodeType {
 		icon: 'file:httpbin.svg',
 		group: ['transform'],
 		version: 1,
-		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
-		description: 'Interact with HttpBin API',
+		subtitle: '={{$parameter["operation"] + ": " + $parameter["path"]}}',
+		description: 'Makes a HTTP request to HttpBin',
 		defaults: {
 			name: 'HttpBin',
+			// eslint-disable-next-line n8n-nodes-base/node-class-description-color-present
+			color: undefined,
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionType.Main],
+		outputs: [NodeConnectionType.Main],
 		credentials: [
 			{
-				name: 'httpbinApi',
-				required: false,
+				name: 'httpBinApi',
+				required: true,
 			},
 		],
-		requestDefaults: {
-			baseURL: 'https://httpbin.org',
-			url: '',
-			headers: {
-				Accept: 'application/json',
-				'Content-Type': 'application/json',
-			},
-		},
-		/**
-		 * In the properties array we have two mandatory options objects required
-		 *
-		 * [Resource & Operation]
-		 *
-		 * https://docs.n8n.io/integrations/creating-nodes/code/create-first-node/#resources-and-operations
-		 *
-		 * In our example, the operations are separated into their own file (HTTPVerbDescription.ts)
-		 * to keep this class easy to read.
-		 *
-		 */
 		properties: [
 			{
-				displayName: 'Resource',
-				name: 'resource',
+				displayName: 'Operation',
+				name: 'operation',
 				type: 'options',
 				noDataExpression: true,
 				options: [
 					{
-						name: 'HTTP Verb',
-						value: 'httpVerb',
+						name: 'GET',
+						value: 'get',
+					},
+					{
+						name: 'POST',
+						value: 'post',
+					},
+					{
+						name: 'PUT',
+						value: 'put',
+					},
+					{
+						name: 'DELETE',
+						value: 'delete',
+					},
+					{
+						name: 'PATCH',
+						value: 'patch',
 					},
 				],
-				default: 'httpVerb',
+				default: 'get',
 			},
-
-			...httpVerbOperations,
+			{
+				displayName: 'Path',
+				name: 'path',
+				type: 'options',
+				options: [
+					{
+						name: 'Simple Response',
+						value: 'response',
+						description: 'Returns a simple response',
+					},
+					{
+						name: 'Status',
+						value: 'status',
+						description: 'Return status code',
+					},
+				],
+				default: 'response',
+				required: true,
+			},
+			{
+				displayName: 'Status Code',
+				name: 'statusCode',
+				type: 'number',
+				required: true,
+				default: 200,
+				description: 'The status code to return. Must be valid HTTP status code.',
+				displayOptions: {
+					show: {
+						path: ['status'],
+					},
+				},
+			},
 			...httpVerbFields,
 		],
 	};
+
+	// The function below is responsible for actually doing whatever this node
+	// is supposed to do. In this case, we're just appending the `myString` property
+	// with whatever the user has entered.
+	// You can make async calls and use `await`.
+	async execute() {
+		// Get credentials the user provided for this node
+		// const credentials = await this.getCredentials('httpBinApi');
+
+		return [[]]; // We need to return an empty response, as this is what is expected from a test node
+	}
 }
