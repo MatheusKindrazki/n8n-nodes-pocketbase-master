@@ -74,34 +74,6 @@
           "removeDuplicates": true
         }
       }
-    },
-    {
-      "name": "upload_file_to_record",
-      "prompt": "Vamos anexar um arquivo ao registro com ID [RECORD_ID] na coleção [COLLECTION]. O arquivo será salvo no campo [FILE_FIELD_NAME] do registro.",
-      "parameters": ["COLLECTION", "RECORD_ID", "FILE_FIELD_NAME", "BINARY_PROPERTY"],
-      "nodeConfiguration": {
-        "resource": "record",
-        "operation": "uploadFile",
-        "collection": "[COLLECTION]",
-        "recordId": "[RECORD_ID]",
-        "fileFieldName": "[FILE_FIELD_NAME]",
-        "binaryPropertyName": "[BINARY_PROPERTY]"
-      }
-    },
-    {
-      "name": "create_record_with_file",
-      "prompt": "Vamos criar um novo registro na coleção [COLLECTION] com um arquivo anexado. O arquivo será salvo no campo [FILE_FIELD_NAME] junto com quaisquer dados adicionais fornecidos.",
-      "parameters": ["COLLECTION", "FILE_FIELD_NAME", "BINARY_PROPERTY", "ADDITIONAL_DATA"],
-      "nodeConfiguration": {
-        "resource": "record",
-        "operation": "createWithFile",
-        "collection": "[COLLECTION]",
-        "fileFieldName": "[FILE_FIELD_NAME]",
-        "binaryPropertyName": "[BINARY_PROPERTY]",
-        "additionalFields": {
-          "data": "[ADDITIONAL_DATA]"
-        }
-      }
     }
   ],
   "suggested_use_cases": [
@@ -158,28 +130,6 @@
       "example_parameters": {
         "COLLECTION": "products",
         "FILTER_CRITERIA": "category = 'electronics' && stock > 0"
-      }
-    },
-    {
-      "title": "Atualizar avatar de perfil de usuário",
-      "description": "Envie uma imagem para o campo avatar do perfil de um usuário existente.",
-      "template": "upload_file_to_record",
-      "example_parameters": {
-        "COLLECTION": "users",
-        "RECORD_ID": "USER_ID_HERE",
-        "FILE_FIELD_NAME": "avatar",
-        "BINARY_PROPERTY": "data"
-      }
-    },
-    {
-      "title": "Adicionar novo produto com imagem",
-      "description": "Crie um novo produto incluindo sua imagem em uma única operação.",
-      "template": "create_record_with_file",
-      "example_parameters": {
-        "COLLECTION": "products",
-        "FILE_FIELD_NAME": "image",
-        "BINARY_PROPERTY": "data",
-        "ADDITIONAL_DATA": "{\"name\": \"Novo Produto\", \"price\": 59.99, \"description\": \"Descrição do produto\"}"
       }
     }
   ]

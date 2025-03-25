@@ -56,10 +56,10 @@ export const versionDescription = {
             action: 'Create a record',
           },
           {
-            name: 'Create with File',
-            value: 'createWithFile',
-            description: 'Create a new record with file upload',
-            action: 'Create a new record with file upload',
+            name: 'Create with Files',
+            value: 'createWithFiles',
+            description: 'Create a record with file uploads',
+            action: 'Create a record with file uploads',
           },
           {
             name: 'Delete',
@@ -92,10 +92,10 @@ export const versionDescription = {
             action: 'Update a record',
           },
           {
-            name: 'Upload File',
-            value: 'uploadFile',
-            description: 'Upload a file to a record',
-            action: 'Upload a file to a record',
+            name: 'Update with Files',
+            value: 'updateWithFiles',
+            description: 'Update a record with file uploads',
+            action: 'Update a record with file uploads',
           },
         ],
         default: 'get',
@@ -127,6 +127,52 @@ export const functional = {
       returns: {
         type: 'record',
         description: 'The created record',
+      },
+    },
+  },
+  createWithFiles: {
+    operation: {
+      resource: 'record',
+      operation: 'createWithFiles',
+      description: 'Create a new record with file uploads in a PocketBase collection',
+      parameters: {
+        collection: {
+          type: 'string',
+          required: true,
+          description: 'The name of the PocketBase collection',
+        },
+        fieldsData: {
+          type: 'collection',
+          required: false,
+          description: 'Regular field data for the record',
+          properties: {
+            fieldName: {
+              type: 'string',
+              required: true,
+              description: 'The name of the field',
+            },
+            fieldValue: {
+              type: 'string',
+              required: true,
+              description: 'The value of the field',
+            },
+          },
+        },
+        binaryPropertyName: {
+          type: 'string',
+          required: true,
+          default: 'data',
+          description: 'Name of the binary property that contains files to upload',
+        },
+        fileFieldNames: {
+          type: 'string',
+          required: true,
+          description: 'Comma-separated list of field names that will receive the uploaded files',
+        },
+      },
+      returns: {
+        type: 'record',
+        description: 'The created record with file information',
       },
     },
   },
@@ -319,11 +365,11 @@ export const functional = {
       },
     },
   },
-  uploadFile: {
+  updateWithFiles: {
     operation: {
       resource: 'record',
-      operation: 'uploadFile',
-      description: 'Upload a file to a PocketBase record',
+      operation: 'updateWithFiles',
+      description: 'Update a record with file uploads in a PocketBase collection',
       parameters: {
         collection: {
           type: 'string',
@@ -333,52 +379,46 @@ export const functional = {
         recordId: {
           type: 'string',
           required: true,
-          description: 'ID of the record to update with the file',
+          description: 'ID of the record to update',
+        },
+        fieldsData: {
+          type: 'collection',
+          required: false,
+          description: 'Regular field data for the record',
+          properties: {
+            fieldName: {
+              type: 'string',
+              required: true,
+              description: 'The name of the field',
+            },
+            fieldValue: {
+              type: 'string',
+              required: true,
+              description: 'The value of the field',
+            },
+          },
         },
         binaryPropertyName: {
           type: 'string',
           required: true,
           default: 'data',
-          description: 'Name of the binary property containing the file data',
+          description: 'Name of the binary property that contains files to upload',
         },
-        fileFieldName: {
+        fileFieldNames: {
           type: 'string',
           required: true,
-          description: 'Name of the field in the PocketBase collection that will store the file',
+          description: 'Comma-separated list of field names that will receive the uploaded files',
+        },
+        appendFiles: {
+          type: 'boolean',
+          required: false,
+          default: false,
+          description: 'Whether to append files to existing ones instead of replacing them',
         },
       },
       returns: {
         type: 'record',
-        description: 'The updated record with the file field',
-      },
-    },
-  },
-  createWithFile: {
-    operation: {
-      resource: 'record',
-      operation: 'createWithFile',
-      description: 'Create a new record with file upload',
-      parameters: {
-        collection: {
-          type: 'string',
-          required: true,
-          description: 'The name of the PocketBase collection',
-        },
-        binaryPropertyName: {
-          type: 'string',
-          required: true,
-          default: 'data',
-          description: 'Name of the binary property containing the file data',
-        },
-        fileFieldName: {
-          type: 'string',
-          required: true,
-          description: 'Name of the field in the PocketBase collection that will store the file',
-        },
-      },
-      returns: {
-        type: 'record',
-        description: 'The newly created record with the file field',
+        description: 'The updated record with file information',
       },
     },
   },
@@ -404,6 +444,38 @@ export const examples = [
         name: 'John Doe',
         email: 'john@example.com',
         isActive: true,
+        created: '2023-01-01T00:00:00.000Z',
+        updated: '2023-01-01T00:00:00.000Z',
+      },
+    },
+  },
+  {
+    name: 'Create a record with file upload',
+    input: {
+      resource: 'record',
+      operation: 'createWithFiles',
+      collection: 'documents',
+      fieldsData: {
+        field: [
+          {
+            fieldName: 'title',
+            fieldValue: 'My Document',
+          },
+          {
+            fieldName: 'description',
+            fieldValue: 'This is a test document',
+          },
+        ],
+      },
+      binaryPropertyName: 'data',
+      fileFieldNames: 'document',
+    },
+    output: {
+      json: {
+        id: 'doc123',
+        title: 'My Document',
+        description: 'This is a test document',
+        document: 'document_a1b2c3.pdf',
         created: '2023-01-01T00:00:00.000Z',
         updated: '2023-01-01T00:00:00.000Z',
       },
@@ -437,6 +509,36 @@ export const examples = [
           },
           // Additional items...
         ],
+      },
+    },
+  },
+  {
+    name: 'Update a record with file upload',
+    input: {
+      resource: 'record',
+      operation: 'updateWithFiles',
+      collection: 'documents',
+      recordId: 'doc123',
+      fieldsData: {
+        field: [
+          {
+            fieldName: 'title',
+            fieldValue: 'Updated Document',
+          },
+        ],
+      },
+      binaryPropertyName: 'data',
+      fileFieldNames: 'document',
+      appendFiles: true,
+    },
+    output: {
+      json: {
+        id: 'doc123',
+        title: 'Updated Document',
+        description: 'This is a test document',
+        document: ['document_a1b2c3.pdf', 'document_d4e5f6.pdf'],
+        created: '2023-01-01T00:00:00.000Z',
+        updated: '2023-01-01T10:00:00.000Z',
       },
     },
   },

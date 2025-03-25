@@ -5,26 +5,35 @@ import type {
 	INodeTypeDescription,
 	IDataObject,
 } from 'n8n-workflow';
-import { NodeOperationError, NodeConnectionType } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 
 // Definindo a interface para o PocketBaseClient
 interface PocketBaseClient {
-	collection: (name: string) => any;
+	collection: (name: string) => {
+		create: (data: IDataObject | typeof FormData) => Promise<IDataObject>;
+		delete: (id: string) => Promise<void>;
+		getOne: (id: string) => Promise<IDataObject>;
+		getList: (page: number, perPage: number, options?: IDataObject) => Promise<{
+			items: IDataObject[];
+			page: number;
+			perPage: number;
+			totalItems: number;
+			totalPages: number;
+		}>;
+		update: (id: string, data: IDataObject | typeof FormData) => Promise<IDataObject>;
+	};
 	admins: {
-		authWithPassword: (email: string, password: string) => Promise<any>;
+		authWithPassword: (email: string, password: string) => Promise<IDataObject>;
 	};
 	authStore: {
-		save: (token: string, model: any) => void;
+		save: (token: string, model: IDataObject | null) => void;
 	};
 }
 
-// Adding FormData interface to support file uploads
-// @ts-ignore
-interface FormDataInterface {
-	// @ts-ignore
-	append(name: string, value: string | any, fileName?: string): void;
-	getHeaders(): Record<string, string>;
-}
+// For FormData handling
+declare const FormData: any;
+declare const Blob: any;
+declare const File: any;
 
 export class PocketBase implements INodeType {
 	description: INodeTypeDescription = {
@@ -38,8 +47,8 @@ export class PocketBase implements INodeType {
 		defaults: {
 			name: 'PocketBase',
 		},
-		inputs: [NodeConnectionType.Main],
-		outputs: [NodeConnectionType.Main],
+		inputs: ['main'] as any,
+		outputs: ['main'] as any,
 		credentials: [
 			{
 				name: 'pocketBaseApi',
@@ -78,6 +87,12 @@ export class PocketBase implements INodeType {
 						action: 'Create a record',
 					},
 					{
+						name: 'Create with Files',
+						value: 'createWithFiles',
+						description: 'Create a record with file uploads',
+						action: 'Create a record with file uploads',
+					},
+					{
 						name: 'Delete',
 						value: 'delete',
 						description: 'Delete a record',
@@ -108,16 +123,10 @@ export class PocketBase implements INodeType {
 						action: 'Update a record',
 					},
 					{
-						name: 'Upload File',
-						value: 'uploadFile',
-						description: 'Upload a file to a record',
-						action: 'Upload a file to a record',
-					},
-					{
-						name: 'Create with File',
-						value: 'createWithFile',
-						description: 'Create a new record with file upload',
-						action: 'Create a new record with file upload',
+						name: 'Update with Files',
+						value: 'updateWithFiles',
+						description: 'Update a record with file uploads',
+						action: 'Update a record with file uploads',
 					},
 				],
 				default: 'get',
@@ -135,7 +144,7 @@ export class PocketBase implements INodeType {
 				displayOptions: {
 					show: {
 						resource: ['record'],
-						operation: ['create', 'delete', 'get', 'getMany', 'update', 'uploadFile', 'createWithFile'],
+						operation: ['create', 'createWithFiles', 'delete', 'get', 'getMany', 'update', 'updateWithFiles'],
 					},
 				},
 				description: 'The name of the PocketBase collection',
@@ -156,6 +165,92 @@ export class PocketBase implements INodeType {
 			},
 
 			// ----------------------------------
+			//        record:createWithFiles and updateWithFiles
+			// ----------------------------------
+			{
+				displayName: 'Fields Data',
+				name: 'fieldsData',
+				type: 'fixedCollection',
+				typeOptions: {
+					multipleValues: true,
+				},
+				displayOptions: {
+					show: {
+						resource: ['record'],
+						operation: ['createWithFiles', 'updateWithFiles'],
+					},
+				},
+				default: {},
+				placeholder: 'Add Field',
+				options: [
+					{
+						displayName: 'Field',
+						name: 'field',
+						values: [
+							{
+								displayName: 'Field Name',
+								name: 'fieldName',
+								type: 'string',
+								default: '',
+								description: 'The name of the field',
+							},
+							{
+								displayName: 'Field Value',
+								name: 'fieldValue',
+								type: 'string',
+								default: '',
+								description: 'The value of the field',
+							},
+						],
+					},
+				],
+				description: 'Regular field data for the record',
+			},
+			{
+				displayName: 'Binary Property',
+				name: 'binaryPropertyName',
+				type: 'string',
+				default: 'data',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['record'],
+						operation: ['createWithFiles', 'updateWithFiles'],
+					},
+				},
+				placeholder: '',
+				description: 'Name of the binary property that contains files to upload',
+			},
+			{
+				displayName: 'File Field Names',
+				name: 'fileFieldNames',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['record'],
+						operation: ['createWithFiles', 'updateWithFiles'],
+					},
+				},
+				placeholder: 'e.g. documents,avatar',
+				description: 'Comma-separated list of field names that will receive the uploaded files',
+			},
+			{
+				displayName: 'Append Files',
+				name: 'appendFiles',
+				type: 'boolean',
+				default: false,
+				displayOptions: {
+					show: {
+						resource: ['record'],
+						operation: ['updateWithFiles'],
+					},
+				},
+				description: 'Whether to append files to existing ones instead of replacing them',
+			},
+
+			// ----------------------------------
 			//        record:get, delete, update
 			// ----------------------------------
 			{
@@ -167,7 +262,7 @@ export class PocketBase implements INodeType {
 				displayOptions: {
 					show: {
 						resource: ['record'],
-						operation: ['delete', 'get', 'update', 'uploadFile'],
+						operation: ['delete', 'get', 'update', 'updateWithFiles'],
 					},
 				},
 				description: 'ID of the record',
@@ -343,160 +438,49 @@ export class PocketBase implements INodeType {
 					},
 				],
 			},
-
-			// ----------------------------------
-			//        record:uploadFile
-			// ----------------------------------
-			{
-				displayName: 'Binary Property',
-				name: 'binaryPropertyName',
-				type: 'string',
-				default: 'data',
-				required: true,
-				displayOptions: {
-					show: {
-						resource: ['record'],
-						operation: ['uploadFile'],
-					},
-				},
-				description: 'Name of the binary property that contains the file to be uploaded',
-			},
-			{
-				displayName: 'File Field Name',
-				name: 'fileFieldName',
-				type: 'string',
-				default: '',
-				required: true,
-				displayOptions: {
-					show: {
-						resource: ['record'],
-						operation: ['uploadFile'],
-					},
-				},
-				description: 'Name of the field in the PocketBase collection that will store the file',
-			},
-			{
-				displayName: 'Additional Fields',
-				name: 'additionalFields',
-				type: 'collection',
-				placeholder: 'Add Field',
-				default: {},
-				displayOptions: {
-					show: {
-						resource: ['record'],
-						operation: ['uploadFile'],
-					},
-				},
-				options: [
-					{
-						displayName: 'Additional Data',
-						name: 'data',
-						type: 'json',
-						default: '{}',
-						description: 'Additional data to include with the file upload',
-					},
-				],
-			},
-
-			// ----------------------------------
-			//        record:createWithFile
-			// ----------------------------------
-			{
-				displayName: 'Binary Property',
-				name: 'binaryPropertyName',
-				type: 'string',
-				default: 'data',
-				required: true,
-				displayOptions: {
-					show: {
-						resource: ['record'],
-						operation: ['createWithFile'],
-					},
-				},
-				description: 'Name of the binary property that contains the file to be uploaded',
-			},
-			{
-				displayName: 'File Field Name',
-				name: 'fileFieldName',
-				type: 'string',
-				default: '',
-				required: true,
-				displayOptions: {
-					show: {
-						resource: ['record'],
-						operation: ['createWithFile'],
-					},
-				},
-				description: 'Name of the field in the PocketBase collection that will store the file',
-			},
-			{
-				displayName: 'Additional Fields',
-				name: 'additionalFields',
-				type: 'collection',
-				placeholder: 'Add Field',
-				default: {},
-				displayOptions: {
-					show: {
-						resource: ['record'],
-						operation: ['createWithFile'],
-					},
-				},
-				options: [
-					{
-						displayName: 'Additional Data',
-						name: 'data',
-						type: 'json',
-						default: '{}',
-						description: 'Additional data to include with the file upload',
-					},
-				],
-			},
 		],
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
 		const returnData: INodeExecutionData[] = [];
-		const length = items.length;
-		let responseData;
 		const resource = this.getNodeParameter('resource', 0) as string;
 		const operation = this.getNodeParameter('operation', 0) as string;
 
 		// Get credentials
-		const credentials = await this.getCredentials('pocketBaseApi') as {
-			url: string;
-			email: string;
-			password: string;
-			apiToken: string;
-			authentication: 'noAuth' | 'emailPassword' | 'apiToken';
-		};
+		const credentials = await this.getCredentials('pocketBaseApi');
 
-		// Import pocketbase client
-		// @ts-ignore
-		const PB = require('pocketbase/cjs');
-		// @ts-ignore
-		const FormData = require('form-data');
+		// Dynamic import of PocketBase
+		const PocketBaseModule = await import('pocketbase');
+		// Get the default export
+		const PocketBaseClient = PocketBaseModule.default || PocketBaseModule;
 
-		// Initialize client
-		const client: PocketBaseClient = new PB(credentials.url);
+		// Create client
+		const url = credentials.url as string;
+		const client = new PocketBaseClient(url) as unknown as PocketBaseClient;
 
-		// Authenticate if needed
-		if (credentials.authentication === 'emailPassword' && credentials.email && credentials.password) {
+		// Authenticate if email and password are provided
+		if (credentials.email && credentials.password) {
 			try {
-				await client.admins.authWithPassword(credentials.email, credentials.password);
+				await client.admins.authWithPassword(
+					credentials.email as string,
+					credentials.password as string,
+				);
 			} catch (error) {
 				throw new NodeOperationError(this.getNode(), `PocketBase authentication failed: ${error.message}`);
 			}
-		} else if (credentials.authentication === 'apiToken' && credentials.apiToken) {
+		}
+		// Use token if provided
+		else if (credentials.apiToken) {
 			try {
-				client.authStore.save(credentials.apiToken, null);
+				client.authStore.save(credentials.apiToken as string, null);
 			} catch (error) {
 				throw new NodeOperationError(this.getNode(), `PocketBase token authentication failed: ${error.message}`);
 			}
 		}
 
 		// Loop through items and process each one
-		for (let i = 0; i < length; i++) {
+		for (let i = 0; i < items.length; i++) {
 			try {
 				if (resource === 'record') {
 					// *********************************************************************
@@ -513,6 +497,64 @@ export class PocketBase implements INodeType {
 
 						// Send the request to create a record
 						const response = await client.collection(collection).create(parsedData);
+
+						returnData.push({
+							json: response,
+							pairedItem: { item: i },
+						});
+					} else if (operation === 'createWithFiles') {
+						// ----------------------------------
+						//     record:createWithFiles
+						// ----------------------------------
+						const collection = this.getNodeParameter('collection', i) as string;
+						const fieldsData = this.getNodeParameter('fieldsData.field', i, []) as IDataObject[];
+						const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
+						const fileFieldNames = (this.getNodeParameter('fileFieldNames', i) as string).split(',').map(f => f.trim());
+
+						// FormData is required for file uploads
+						const formData = new FormData();
+
+						// Add all the regular fields
+						for (const field of fieldsData) {
+							if (field.fieldName && field.fieldValue) {
+								formData.append(field.fieldName as string, field.fieldValue as string);
+							}
+						}
+
+						// Check if the binary data exists
+						const binaryData = items[i].binary?.[binaryPropertyName];
+						if (binaryData) {
+
+							// If it's a single file
+							if (!Array.isArray(binaryData)) {
+								const fileFieldName = fileFieldNames[0] || 'file';
+								const fileBuffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
+								const fileName = binaryData.fileName || 'file';
+
+								// Create a blob from the buffer
+								const blob = new Blob([fileBuffer]);
+								const file = new File([blob], fileName);
+
+								formData.append(fileFieldName, file);
+							}
+							// If it's multiple files in an array
+							else if (Array.isArray(binaryData)) {
+								binaryData.forEach(async (data, index) => {
+									const fileFieldName = fileFieldNames[index] || fileFieldNames[0] || 'files';
+									const fileBuffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
+									const fileName = data.fileName || `file${index}`;
+
+									// Create a blob from the buffer
+									const blob = new Blob([fileBuffer]);
+									const file = new File([blob], fileName);
+
+									formData.append(fileFieldName, file);
+								});
+							}
+						}
+
+						// Send the request with FormData
+						const response = await client.collection(collection).create(formData);
 
 						returnData.push({
 							json: response,
@@ -603,6 +645,74 @@ export class PocketBase implements INodeType {
 							json: response,
 							pairedItem: { item: i },
 						});
+					} else if (operation === 'updateWithFiles') {
+						// ----------------------------------
+						//     record:updateWithFiles
+						// ----------------------------------
+						const collection = this.getNodeParameter('collection', i) as string;
+						const recordId = this.getNodeParameter('recordId', i) as string;
+						const fieldsData = this.getNodeParameter('fieldsData.field', i, []) as IDataObject[];
+						const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
+						const fileFieldNames = (this.getNodeParameter('fileFieldNames', i) as string).split(',').map(f => f.trim());
+						const appendFiles = this.getNodeParameter('appendFiles', i, false) as boolean;
+
+						// FormData is required for file uploads
+						const formData = new FormData();
+
+						// Add all the regular fields
+						for (const field of fieldsData) {
+							if (field.fieldName && field.fieldValue) {
+								formData.append(field.fieldName as string, field.fieldValue as string);
+							}
+						}
+
+						// Check if the binary data exists
+						const binaryData = items[i].binary?.[binaryPropertyName];
+						if (binaryData) {
+
+							// If it's a single file
+							if (!Array.isArray(binaryData)) {
+								// Determine the field name, with '+' suffix if appending
+								const fileFieldName = appendFiles
+									? `${fileFieldNames[0] || 'file'}+`
+									: fileFieldNames[0] || 'file';
+
+								const fileBuffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
+								const fileName = binaryData.fileName || 'file';
+
+								// Create a blob from the buffer
+								const blob = new Blob([fileBuffer]);
+								const file = new File([blob], fileName);
+
+								formData.append(fileFieldName, file);
+							}
+							// If it's multiple files in an array
+							else if (Array.isArray(binaryData)) {
+								binaryData.forEach(async (data, index) => {
+									// Determine the field name, with '+' suffix if appending
+									const fileFieldName = appendFiles
+										? `${fileFieldNames[index] || fileFieldNames[0] || 'files'}+`
+										: fileFieldNames[index] || fileFieldNames[0] || 'files';
+
+									const fileBuffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
+									const fileName = data.fileName || `file${index}`;
+
+									// Create a blob from the buffer
+									const blob = new Blob([fileBuffer]);
+									const file = new File([blob], fileName);
+
+									formData.append(fileFieldName, file);
+								});
+							}
+						}
+
+						// Send the request with FormData
+						const response = await client.collection(collection).update(recordId, formData);
+
+						returnData.push({
+							json: response,
+							pairedItem: { item: i },
+						});
 					} else if (operation === 'multiTableQuery') {
 						// ----------------------------------
 						//      record:multiTableQuery
@@ -684,104 +794,16 @@ export class PocketBase implements INodeType {
 								pairedItem: { item: i },
 							});
 						}
-					} else if (operation === 'uploadFile') {
-						// Handle file uploads
-						const collection = this.getNodeParameter('collection', i) as string;
-						const recordId = this.getNodeParameter('recordId', i) as string;
-						const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
-						const fileFieldName = this.getNodeParameter('fileFieldName', i) as string;
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-
-						const formData = new FormData();
-
-						// Check if binary data exists
-						if (items[i].binary === undefined) {
-							throw new NodeOperationError(this.getNode(), 'No binary data exists on item!', { itemIndex: i });
-						}
-
-						const binaryData = items[i].binary![binaryPropertyName];
-						if (binaryData === undefined) {
-							throw new NodeOperationError(
-								this.getNode(),
-								`No binary data property "${binaryPropertyName}" does not exists on item!`,
-								{ itemIndex: i },
-							);
-						}
-
-						// Append the file to the form data
-						const buffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
-						formData.append(fileFieldName, buffer, binaryData.fileName);
-
-						// Add additional fields if any
-						if (additionalFields.data) {
-							const data = JSON.parse(additionalFields.data as string);
-							for (const key of Object.keys(data)) {
-								formData.append(key, data[key]);
-							}
-						}
-
-						// Make API request to upload the file
-						responseData = await client.collection(collection).update(recordId, formData);
-
-						const executionData = this.helpers.constructExecutionMetaData(
-							this.helpers.returnJsonArray(responseData),
-							{ itemData: { item: i } },
-						);
-
-						returnData.push(...executionData);
-					} else if (operation === 'createWithFile') {
-						// Handle file uploads with new record creation
-						const collection = this.getNodeParameter('collection', i) as string;
-						const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
-						const fileFieldName = this.getNodeParameter('fileFieldName', i) as string;
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-
-						const formData = new FormData();
-
-						// Check if binary data exists
-						if (items[i].binary === undefined) {
-							throw new NodeOperationError(this.getNode(), 'No binary data exists on item!', { itemIndex: i });
-						}
-
-						const binaryData = items[i].binary![binaryPropertyName];
-						if (binaryData === undefined) {
-							throw new NodeOperationError(
-								this.getNode(),
-								`No binary data property "${binaryPropertyName}" does not exists on item!`,
-								{ itemIndex: i },
-							);
-						}
-
-						// Append the file to the form data
-						const buffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
-						formData.append(fileFieldName, buffer, binaryData.fileName);
-
-						// Add additional fields if any
-						if (additionalFields.data) {
-							const data = JSON.parse(additionalFields.data as string);
-							for (const key of Object.keys(data)) {
-								formData.append(key, data[key]);
-							}
-						}
-
-						// Make API request to create a new record with the file
-						responseData = await client.collection(collection).create(formData);
-
-						const executionData = this.helpers.constructExecutionMetaData(
-							this.helpers.returnJsonArray(responseData),
-							{ itemData: { item: i } },
-						);
-
-						returnData.push(...executionData);
 					}
 				}
 			} catch (error) {
 				if (this.continueOnFail()) {
-					const executionErrorData = this.helpers.constructExecutionMetaData(
-						this.helpers.returnJsonArray({ error: error.message }),
-						{ itemData: { item: i } },
-					);
-					returnData.push(...executionErrorData);
+					returnData.push({
+						json: {
+							error: error.message,
+						},
+						pairedItem: { item: i },
+					});
 					continue;
 				}
 				throw error;

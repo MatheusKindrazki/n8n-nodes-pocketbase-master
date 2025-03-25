@@ -9,12 +9,10 @@ AI agents can use this node to perform CRUD operations on PocketBase databases.
 ### Capabilities
 
 - **Create Records**: Add new records to any PocketBase collection
-- **Create with File**: Create new records with file attachments in a single operation
 - **Read Records**: Retrieve single records by ID or query multiple records with filtering
 - **Update Records**: Modify existing records in any collection
 - **Delete Records**: Remove records from collections
 - **Multi-Table Query**: Query across multiple tables/collections in a single operation
-- **Upload Files**: Attach files to existing records in collections with file fields
 
 ### Examples for AI Use
 
@@ -62,28 +60,6 @@ AI agents can use this node to perform CRUD operations on PocketBase databases.
     "mergeField": "id"
   }
 }
-
-// Example 4: Upload a profile picture to a user record
-{
-  "resource": "record",
-  "operation": "uploadFile",
-  "collection": "users",
-  "recordId": "RECORD_ID",
-  "fileFieldName": "avatar",
-  "binaryPropertyName": "data"
-}
-
-// Example 5: Create a new product with image in one step
-{
-  "resource": "record",
-  "operation": "createWithFile",
-  "collection": "products",
-  "fileFieldName": "image",
-  "binaryPropertyName": "data",
-  "additionalFields": {
-    "data": "{ \"name\": \"New Product\", \"price\": 29.99 }"
-  }
-}
 ```
 
 ## Schema for AI Agents
@@ -94,7 +70,7 @@ AI agents can use this node to perform CRUD operations on PocketBase databases.
   // Always 'record' for current version
   "resource": "record",
   
-  // One of: 'create', 'createWithFile', 'delete', 'get', 'getMany', 'multiTableQuery', 'update', 'uploadFile'
+  // One of: 'create', 'delete', 'get', 'getMany', 'multiTableQuery', 'update'
   "operation": string,
   
   // For all operations except multiTableQuery
@@ -103,7 +79,7 @@ AI agents can use this node to perform CRUD operations on PocketBase databases.
   // For create and update operations
   "data": object,
   
-  // For get, delete, update, uploadFile operations
+  // For get, delete, update operations
   "recordId": string,
   
   // For getMany operation
@@ -127,15 +103,6 @@ AI agents can use this node to perform CRUD operations on PocketBase databases.
     "mergeResults": boolean,
     "mergeField": string,
     "removeDuplicates": boolean
-  },
-  
-  // For uploadFile and createWithFile operations
-  "fileFieldName": string,
-  "binaryPropertyName": string,
-  
-  // For createWithFile operation
-  "additionalFields": {
-    "data": string // JSON string of additional fields
   }
 }
 ```

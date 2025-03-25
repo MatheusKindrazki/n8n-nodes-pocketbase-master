@@ -11,13 +11,13 @@ AI agents can use the following operations:
 | Operation | Description | Use Case |
 |-----------|-------------|----------|
 | Create | Add new records to collections | Creating users, products, or any database record |
-| Create with File | Create a new record with file upload | Adding a new product with image, new document with attachment |
+| Create with Files | Add new records with file uploads | Creating records that contain documents, images, or other files |
 | Get | Retrieve a single record by ID | Looking up specific information |
 | Get Many | Query multiple records with filters | Searching for records matching criteria |
 | Update | Modify existing records | Updating statuses, information or properties |
+| Update with Files | Modify existing records with file uploads | Updating records while adding or replacing document files, images, etc. |
 | Delete | Remove records | Cleaning up or removing unwanted data |
 | Multi-Table Query | Query across multiple tables at once | Comprehensive data retrieval across related collections |
-| Upload File | Upload a file to a record's file field | Adding images, documents, or other files to existing records |
 
 ## How to Utilize in AI Agent Workflows
 
@@ -70,6 +70,60 @@ This node has a powerful multi-table query feature for complex data retrieval:
 }
 ```
 
+### 4. Working with File Uploads
+
+The node supports file uploads using two special operations:
+
+#### Create with Files
+Use this when you need to create a new record that includes file attachments:
+
+```javascript
+// Example: Creating a product with image
+{
+  "resource": "record",
+  "operation": "createWithFiles",
+  "collection": "products",
+  "fieldsData": {
+    "field": [
+      {
+        "fieldName": "name",
+        "fieldValue": "Product Name"
+      },
+      {
+        "fieldName": "price",
+        "fieldValue": "99.99"
+      }
+    ]
+  },
+  "binaryPropertyName": "data",
+  "fileFieldNames": "image"
+}
+```
+
+#### Update with Files
+Use this when you need to update an existing record with new files:
+
+```javascript
+// Example: Updating a document with a new file version
+{
+  "resource": "record",
+  "operation": "updateWithFiles",
+  "collection": "documents",
+  "recordId": "RECORD_ID",
+  "fieldsData": {
+    "field": [
+      {
+        "fieldName": "title",
+        "fieldValue": "Updated Document"
+      }
+    ]
+  },
+  "binaryPropertyName": "data",
+  "fileFieldNames": "attachment",
+  "appendFiles": true  // Set to true to add files alongside existing ones
+}
+```
+
 ## Error Handling for AI Agents
 
 ### Common Errors
@@ -92,6 +146,12 @@ This node has a powerful multi-table query feature for complex data retrieval:
    ```
    ↪ Advise on proper data structure for the collection
 
+4. **File Upload Errors**:
+   ```
+   "error": "Failed to upload file: The maximum allowed file size is X MB"
+   ```
+   ↪ Suggest optimizing file size or using a different approach
+
 ## Working with Data Structures
 
 For create and update operations, data must be provided as a valid JSON string:
@@ -108,45 +168,19 @@ For create and update operations, data must be provided as a valid JSON string:
 }
 ```
 
-## File Upload Operations
-
-When working with files in PocketBase records, you have two options:
-
-### Create with File
-
-Use this when you need to create a brand new record with a file attachment in a single operation:
+For file upload operations, use the fieldsData structure instead of data:
 
 ```javascript
-// Example: Creating a new product with an image
-{
-  "resource": "record",
-  "operation": "createWithFile",
-  "collection": "products",
-  "fileFieldName": "image",
-  "binaryPropertyName": "data",
-  "additionalFields": {
-    "data": "{ \"name\": \"New Product\", \"price\": 29.99, \"description\": \"Product description\" }"
-  }
+// Good example - fieldsData for structured form fields
+"fieldsData": {
+  "field": [
+    {
+      "fieldName": "title",
+      "fieldValue": "Document Title"
+    }
+  ]
 }
 ```
-
-### Upload File
-
-Use this when you need to add or update a file on an existing record:
-
-```javascript
-// Example: Uploading an image to a user's avatar field
-{
-  "resource": "record",
-  "operation": "uploadFile",
-  "collection": "users",
-  "recordId": "USER_RECORD_ID",
-  "binaryPropertyName": "data",
-  "fileFieldName": "avatar"
-}
-```
-
-Both operations support including additional data fields alongside the file upload.
 
 ## Response Processing Tips
 
@@ -155,6 +189,7 @@ Responses will match PocketBase's API format:
 1. Single record operations return the record object
 2. List operations return a pagination object with `items` array
 3. Multi-table operations return either merged results or a nested object
+4. File upload operations will include file information in the response
 
 ---
 
