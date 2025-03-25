@@ -467,7 +467,8 @@ export class PocketBase implements INodeType {
 			url: string;
 			email: string;
 			password: string;
-			authentication: 'noAuth' | 'emailPassword';
+			apiToken: string;
+			authentication: 'noAuth' | 'emailPassword' | 'apiToken';
 		};
 
 		// Import pocketbase client
@@ -480,8 +481,18 @@ export class PocketBase implements INodeType {
 		const client: PocketBaseClient = new PB(credentials.url);
 
 		// Authenticate if needed
-		if (credentials.authentication === 'emailPassword') {
-			await client.admins.authWithPassword(credentials.email, credentials.password);
+		if (credentials.authentication === 'emailPassword' && credentials.email && credentials.password) {
+			try {
+				await client.admins.authWithPassword(credentials.email, credentials.password);
+			} catch (error) {
+				throw new NodeOperationError(this.getNode(), `PocketBase authentication failed: ${error.message}`);
+			}
+		} else if (credentials.authentication === 'apiToken' && credentials.apiToken) {
+			try {
+				client.authStore.save(credentials.apiToken, null);
+			} catch (error) {
+				throw new NodeOperationError(this.getNode(), `PocketBase token authentication failed: ${error.message}`);
+			}
 		}
 
 		// Loop through items and process each one
