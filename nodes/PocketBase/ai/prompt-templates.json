@@ -1,0 +1,186 @@
+{
+  "templates": [
+    {
+      "name": "query_single_pocketbase_record",
+      "prompt": "Use o nó PocketBase para buscar um único registro de [COLLECTION] onde o ID é [RECORD_ID]. Isso nos permitirá obter informações detalhadas sobre este item específico.",
+      "parameters": ["COLLECTION", "RECORD_ID"],
+      "nodeConfiguration": {
+        "resource": "record",
+        "operation": "get",
+        "collection": "[COLLECTION]",
+        "recordId": "[RECORD_ID]"
+      }
+    },
+    {
+      "name": "search_pocketbase_records",
+      "prompt": "Vamos usar o PocketBase para pesquisar registros na coleção [COLLECTION] que correspondam ao filtro [FILTER_CRITERIA]. Isso nos dará uma lista de itens que atendem aos seus critérios específicos.",
+      "parameters": ["COLLECTION", "FILTER_CRITERIA"],
+      "nodeConfiguration": {
+        "resource": "record",
+        "operation": "getMany",
+        "collection": "[COLLECTION]",
+        "returnAll": false,
+        "limit": 10,
+        "filter": "[FILTER_CRITERIA]"
+      }
+    },
+    {
+      "name": "create_pocketbase_record",
+      "prompt": "Vamos adicionar um novo registro à coleção [COLLECTION] no PocketBase com os dados que você forneceu. Os dados serão estruturados de acordo com o modelo da coleção.",
+      "parameters": ["COLLECTION", "DATA_JSON"],
+      "nodeConfiguration": {
+        "resource": "record",
+        "operation": "create",
+        "collection": "[COLLECTION]",
+        "data": "[DATA_JSON]"
+      }
+    },
+    {
+      "name": "update_pocketbase_record",
+      "prompt": "Atualizaremos o registro existente com ID [RECORD_ID] na coleção [COLLECTION] com os novos dados fornecidos. Apenas os campos incluídos serão alterados.",
+      "parameters": ["COLLECTION", "RECORD_ID", "DATA_JSON"],
+      "nodeConfiguration": {
+        "resource": "record",
+        "operation": "update",
+        "collection": "[COLLECTION]",
+        "recordId": "[RECORD_ID]",
+        "data": "[DATA_JSON]"
+      }
+    },
+    {
+      "name": "delete_pocketbase_record",
+      "prompt": "Vamos remover permanentemente o registro com ID [RECORD_ID] da coleção [COLLECTION]. Esta ação não pode ser desfeita.",
+      "parameters": ["COLLECTION", "RECORD_ID"],
+      "nodeConfiguration": {
+        "resource": "record",
+        "operation": "delete",
+        "collection": "[COLLECTION]",
+        "recordId": "[RECORD_ID]"
+      }
+    },
+    {
+      "name": "multi_table_query",
+      "prompt": "Realizaremos uma consulta em várias tabelas para obter dados relacionados. Isso nos permitirá buscar informações conectadas entre diferentes coleções em uma única operação.",
+      "parameters": ["TABLE_CONFIGURATIONS", "MERGE_FIELD"],
+      "nodeConfiguration": {
+        "resource": "record",
+        "operation": "multiTableQuery",
+        "tables": {
+          "tableValues": "[TABLE_CONFIGURATIONS]"
+        },
+        "options": {
+          "mergeResults": true,
+          "mergeField": "[MERGE_FIELD]",
+          "removeDuplicates": true
+        }
+      }
+    },
+    {
+      "name": "upload_file_to_record",
+      "prompt": "Vamos anexar um arquivo ao registro com ID [RECORD_ID] na coleção [COLLECTION]. O arquivo será salvo no campo [FILE_FIELD_NAME] do registro.",
+      "parameters": ["COLLECTION", "RECORD_ID", "FILE_FIELD_NAME", "BINARY_PROPERTY"],
+      "nodeConfiguration": {
+        "resource": "record",
+        "operation": "uploadFile",
+        "collection": "[COLLECTION]",
+        "recordId": "[RECORD_ID]",
+        "fileFieldName": "[FILE_FIELD_NAME]",
+        "binaryPropertyName": "[BINARY_PROPERTY]"
+      }
+    },
+    {
+      "name": "create_record_with_file",
+      "prompt": "Vamos criar um novo registro na coleção [COLLECTION] com um arquivo anexado. O arquivo será salvo no campo [FILE_FIELD_NAME] junto com quaisquer dados adicionais fornecidos.",
+      "parameters": ["COLLECTION", "FILE_FIELD_NAME", "BINARY_PROPERTY", "ADDITIONAL_DATA"],
+      "nodeConfiguration": {
+        "resource": "record",
+        "operation": "createWithFile",
+        "collection": "[COLLECTION]",
+        "fileFieldName": "[FILE_FIELD_NAME]",
+        "binaryPropertyName": "[BINARY_PROPERTY]",
+        "additionalFields": {
+          "data": "[ADDITIONAL_DATA]"
+        }
+      }
+    }
+  ],
+  "suggested_use_cases": [
+    {
+      "title": "Verificar se um usuário existe em várias coleções",
+      "description": "Use a consulta multi-tabela para verificar rapidamente se um usuário com um determinado e-mail existe em várias coleções diferentes.",
+      "template": "multi_table_query",
+      "example_parameters": {
+        "TABLE_CONFIGURATIONS": [
+          {
+            "collection": "users",
+            "filter": "email = 'user@example.com'",
+            "fields": "id,email,name"
+          },
+          {
+            "collection": "customers",
+            "filter": "email = 'user@example.com'",
+            "fields": "id,email,company"
+          },
+          {
+            "collection": "newsletter_subscribers",
+            "filter": "email = 'user@example.com'",
+            "fields": "id,email,subscribed_at"
+          }
+        ],
+        "MERGE_FIELD": "email"
+      }
+    },
+    {
+      "title": "Obter perfil completo do usuário com pedidos",
+      "description": "Combine dados de usuário com seus pedidos recentes em uma única consulta.",
+      "template": "multi_table_query",
+      "example_parameters": {
+        "TABLE_CONFIGURATIONS": [
+          {
+            "collection": "users",
+            "filter": "id = 'USER_ID_HERE'",
+            "fields": "id,name,email,created"
+          },
+          {
+            "collection": "orders",
+            "filter": "user_id = 'USER_ID_HERE'",
+            "fields": "id,total,status,created",
+            "limit": 5
+          }
+        ],
+        "MERGE_FIELD": "id"
+      }
+    },
+    {
+      "title": "Busca de produtos por categoria e estoque",
+      "description": "Encontre produtos de uma categoria específica que estão em estoque.",
+      "template": "search_pocketbase_records",
+      "example_parameters": {
+        "COLLECTION": "products",
+        "FILTER_CRITERIA": "category = 'electronics' && stock > 0"
+      }
+    },
+    {
+      "title": "Atualizar avatar de perfil de usuário",
+      "description": "Envie uma imagem para o campo avatar do perfil de um usuário existente.",
+      "template": "upload_file_to_record",
+      "example_parameters": {
+        "COLLECTION": "users",
+        "RECORD_ID": "USER_ID_HERE",
+        "FILE_FIELD_NAME": "avatar",
+        "BINARY_PROPERTY": "data"
+      }
+    },
+    {
+      "title": "Adicionar novo produto com imagem",
+      "description": "Crie um novo produto incluindo sua imagem em uma única operação.",
+      "template": "create_record_with_file",
+      "example_parameters": {
+        "COLLECTION": "products",
+        "FILE_FIELD_NAME": "image",
+        "BINARY_PROPERTY": "data",
+        "ADDITIONAL_DATA": "{\"name\": \"Novo Produto\", \"price\": 59.99, \"description\": \"Descrição do produto\"}"
+      }
+    }
+  ]
+}

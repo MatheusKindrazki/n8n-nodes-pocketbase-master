@@ -1,0 +1,258 @@
+[
+  {
+    "name": "Create a user record",
+    "description": "Creates a new user record in PocketBase",
+    "workflow": {
+      "nodes": [
+        {
+          "parameters": {
+            "resource": "record",
+            "operation": "create",
+            "collection": "users",
+            "data": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"securePassword123\",\n  \"passwordConfirm\": \"securePassword123\"\n}"
+          },
+          "name": "PocketBase",
+          "type": "n8n-nodes-pocketbase-master.pocketBase",
+          "typeVersion": 1,
+          "position": [
+            840,
+            300
+          ],
+          "credentials": {
+            "pocketBaseApi": {
+              "id": "1",
+              "name": "PocketBase Account"
+            }
+          }
+        }
+      ],
+      "connections": {}
+    },
+    "output": {
+      "json": {
+        "id": "abc123",
+        "created": "2023-01-01T00:00:00.000Z",
+        "updated": "2023-01-01T00:00:00.000Z",
+        "name": "John Doe",
+        "email": "john@example.com"
+      }
+    }
+  },
+  {
+    "name": "Get user by ID",
+    "description": "Retrieves a user by their ID",
+    "workflow": {
+      "nodes": [
+        {
+          "parameters": {
+            "resource": "record",
+            "operation": "get",
+            "collection": "users",
+            "recordId": "abc123"
+          },
+          "name": "PocketBase",
+          "type": "n8n-nodes-pocketbase-master.pocketBase",
+          "typeVersion": 1,
+          "position": [
+            840,
+            300
+          ],
+          "credentials": {
+            "pocketBaseApi": {
+              "id": "1",
+              "name": "PocketBase Account"
+            }
+          }
+        }
+      ],
+      "connections": {}
+    },
+    "output": {
+      "json": {
+        "id": "abc123",
+        "created": "2023-01-01T00:00:00.000Z",
+        "updated": "2023-01-01T00:00:00.000Z",
+        "name": "John Doe",
+        "email": "john@example.com"
+      }
+    }
+  },
+  {
+    "name": "Search users by email domain",
+    "description": "Searches for users with a specific email domain",
+    "workflow": {
+      "nodes": [
+        {
+          "parameters": {
+            "resource": "record",
+            "operation": "getMany",
+            "collection": "users",
+            "returnAll": false,
+            "limit": 10,
+            "filter": "email ~ \"@example.com\"",
+            "sort": "-created"
+          },
+          "name": "PocketBase",
+          "type": "n8n-nodes-pocketbase-master.pocketBase",
+          "typeVersion": 1,
+          "position": [
+            840,
+            300
+          ],
+          "credentials": {
+            "pocketBaseApi": {
+              "id": "1",
+              "name": "PocketBase Account"
+            }
+          }
+        }
+      ],
+      "connections": {}
+    },
+    "output": {
+      "json": {
+        "total": 10,
+        "page": 1,
+        "perPage": 10,
+        "totalPages": 1,
+        "items": [
+          {
+            "id": "abc123",
+            "created": "2023-01-01T00:00:00.000Z",
+            "updated": "2023-01-01T00:00:00.000Z",
+            "name": "John Doe",
+            "email": "john@example.com"
+          },
+          {
+            "id": "def456",
+            "created": "2023-01-02T00:00:00.000Z",
+            "updated": "2023-01-02T00:00:00.000Z",
+            "name": "Jane Smith",
+            "email": "jane@example.com"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "Update user status",
+    "description": "Updates a user's status in PocketBase",
+    "workflow": {
+      "nodes": [
+        {
+          "parameters": {
+            "resource": "record",
+            "operation": "update",
+            "collection": "users",
+            "recordId": "abc123",
+            "data": "{\n  \"status\": \"active\",\n  \"lastLogin\": \"2023-03-15T10:00:00.000Z\"\n}"
+          },
+          "name": "PocketBase",
+          "type": "n8n-nodes-pocketbase-master.pocketBase",
+          "typeVersion": 1,
+          "position": [
+            840,
+            300
+          ],
+          "credentials": {
+            "pocketBaseApi": {
+              "id": "1",
+              "name": "PocketBase Account"
+            }
+          }
+        }
+      ],
+      "connections": {}
+    },
+    "output": {
+      "json": {
+        "id": "abc123",
+        "created": "2023-01-01T00:00:00.000Z",
+        "updated": "2023-03-15T10:00:00.000Z",
+        "name": "John Doe",
+        "email": "john@example.com",
+        "status": "active",
+        "lastLogin": "2023-03-15T10:00:00.000Z"
+      }
+    }
+  },
+  {
+    "name": "Multi-table customer data query",
+    "description": "Searches for customer information across multiple tables",
+    "workflow": {
+      "nodes": [
+        {
+          "parameters": {
+            "resource": "record",
+            "operation": "multiTableQuery",
+            "tables": {
+              "tableValues": [
+                {
+                  "collection": "users",
+                  "filter": "email = \"john@example.com\"",
+                  "fields": "id,name,email,created",
+                  "limit": 1
+                },
+                {
+                  "collection": "orders",
+                  "filter": "userId = \"abc123\"",
+                  "fields": "id,total,status,created",
+                  "limit": 10
+                },
+                {
+                  "collection": "payments",
+                  "filter": "userId = \"abc123\"",
+                  "fields": "id,amount,method,status",
+                  "limit": 10
+                }
+              ]
+            },
+            "options": {
+              "mergeResults": true,
+              "mergeField": "userId",
+              "removeDuplicates": true
+            }
+          },
+          "name": "PocketBase",
+          "type": "n8n-nodes-pocketbase-master.pocketBase",
+          "typeVersion": 1,
+          "position": [
+            840,
+            300
+          ],
+          "credentials": {
+            "pocketBaseApi": {
+              "id": "1",
+              "name": "PocketBase Account"
+            }
+          }
+        }
+      ],
+      "connections": {}
+    },
+    "output": {
+      "json": {
+        "merged": true,
+        "mergeField": "userId",
+        "count": 2,
+        "results": [
+          {
+            "id": "abc123",
+            "name": "John Doe",
+            "email": "john@example.com",
+            "created": "2023-01-01T00:00:00.000Z",
+            "sourceTables": ["users"]
+          },
+          {
+            "id": "ord123",
+            "userId": "abc123",
+            "total": 99.99,
+            "status": "completed",
+            "created": "2023-03-01T00:00:00.000Z",
+            "sourceTables": ["orders"]
+          }
+        ]
+      }
+    }
+  }
+]

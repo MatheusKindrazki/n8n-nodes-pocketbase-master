@@ -1,10 +1,14 @@
 {
   "name": "n8n-nodes-pocketbase-master",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "description": "N8N nodes to integrate with PocketBase like a boss",
   "keywords": [
     "n8n-community-node-package",
-    "pocketbase"
+    "pocketbase",
+    "database",
+    "api",
+    "n8n-ai-node",
+    "ai-agent-compatible"
   ],
   "license": "MIT",
   "homepage": "https://github.com/matheuskindrazki/n8n-nodes-pocketbase-master",
@@ -31,7 +35,7 @@
   },
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "build": "tsc && gulp build:icons",
+    "build": "tsc && gulp build:all",
     "dev": "tsc --watch",
     "format": "prettier nodes credentials --write",
     "lint": "eslint nodes credentials package.json",
@@ -48,7 +52,25 @@
     ],
     "nodes": [
       "dist/nodes/PocketBase/PocketBase.node.js"
-    ]
+    ],
+    "aiNode": true,
+    "aiNodeDocumentation": "dist/nodes/PocketBase/README.md",
+    "codex": {
+      "categories": ["Database", "Data & Storage"],
+      "subcategories": {
+        "Database": ["NoSQL"]
+      },
+      "resources": {
+        "primaryDocumentation": [
+          {
+            "url": "https://github.com/matheuskindrazki/n8n-nodes-pocketbase-master/blob/main/nodes/PocketBase/README.md"
+          }
+        ]
+      },
+      "nodeFiles": [
+        "dist/nodes/PocketBase/PocketBase.node.codex.js"
+      ]
+    }
   },
   "devDependencies": {
     "@typescript-eslint/parser": "^7.15.0",
