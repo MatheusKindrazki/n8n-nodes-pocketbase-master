@@ -36,7 +36,7 @@ declare const FormData: any;
 declare const Blob: any;
 declare const File: any;
 
-export class PocketBase implements INodeType {
+class PocketBaseCustom implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'PocketBase Custom',
 		name: 'pocketBaseCustom',
@@ -843,3 +843,5 @@ export class PocketBase implements INodeType {
 		return [returnData];
 	}
 }
+
+export = { PocketBaseCustom };
