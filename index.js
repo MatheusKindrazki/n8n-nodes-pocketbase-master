@@ -8,11 +8,11 @@
 'use strict';
 
 // Main module export
-module.exports = require('./dist/nodes/PocketBase/PocketBase.node');
+module.exports = require('./dist/nodes/PocketBase/PocketBaseCustom.node');
 
 // AI metadata exports
 module.exports.aiMetadata = {
-  name: 'PocketBase',
+  name: 'PocketBase Custom',
   description: 'Work with PocketBase records through a user-friendly interface',
   version: '0.1.1',
   capabilities: [

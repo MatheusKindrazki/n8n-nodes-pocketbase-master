@@ -25,14 +25,8 @@
     "pnpm": ">=9.1"
   },
   "packageManager": "pnpm@9.1.4",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "index.js",
   "type": "commonjs",
-  "exports": {
-    ".": {
-      "require": "./dist/index.js"
-    }
-  },
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "build": "tsc && gulp build:all",
@@ -43,7 +37,8 @@
     "prepublishOnly": "pnpm build"
   },
   "files": [
-    "dist"
+    "dist",
+    "index.js"
   ],
   "n8n": {
     "n8nNodesApiVersion": 1,
