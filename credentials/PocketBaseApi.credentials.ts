@@ -6,8 +6,8 @@ import {
 } from 'n8n-workflow';
 
 export class PocketBaseApi implements ICredentialType {
-	name = 'pocketBaseApi';
-	displayName = 'PocketBase API';
+	name = 'pocketBaseCustomApi';
+	displayName = 'PocketBase Custom API';
 	properties: INodeProperties[] = [
 		{
 			displayName: 'URL',

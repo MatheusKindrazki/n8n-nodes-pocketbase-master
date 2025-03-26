@@ -491,7 +491,7 @@ export class PocketBase implements INodeType {
 			} catch (error) {
 				throw new NodeOperationError(
 					this.getNode(),
-					`PocketBase token authentication failed: ${error.message}. Please verify your API token.`,
+					`PocketBase token authentication failed: ${(error as Error).message}. Please verify your API token.`,
 				);
 			}
 		} else {
