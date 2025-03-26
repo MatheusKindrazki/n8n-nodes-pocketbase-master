@@ -12,7 +12,7 @@ interface PocketBaseClient {
 	collection: (name: string) => {
 		create: (data: IDataObject | typeof FormData) => Promise<IDataObject>;
 		delete: (id: string) => Promise<void>;
-		getOne: (id: string) => Promise<IDataObject>;
+		getOne: (id: string, options?: IDataObject) => Promise<IDataObject>;
 		getList: (page: number, perPage: number, options?: IDataObject) => Promise<{
 			items: IDataObject[];
 			page: number;
@@ -268,6 +268,20 @@ class PocketBaseCustom implements INodeType {
 				},
 				description: 'ID of the record',
 			},
+			{
+				displayName: 'Expand Relations',
+				name: 'expand',
+				type: 'string',
+				default: '',
+				displayOptions: {
+					show: {
+						resource: ['record'],
+						operation: ['get', 'getMany'],
+					},
+				},
+				placeholder: 'e.g. turma,turma.colegio',
+				description: 'Comma-separated list of relations to expand (e.g. turma,turma.colegio)',
+			},
 
 			// ----------------------------------
 			//         record:getMany
@@ -369,6 +383,14 @@ class PocketBaseCustom implements INodeType {
 								default: '',
 								placeholder: 'e.g. email = "test@example.com"',
 								description: 'Filter criteria for this table',
+							},
+							{
+								displayName: 'Expand Relations',
+								name: 'expand',
+								type: 'string',
+								default: '',
+								placeholder: 'e.g. turma,turma.colegio',
+								description: 'Comma-separated list of relations to expand (e.g. turma,turma.colegio)',
 							},
 							{
 								displayName: 'Fields',
@@ -610,9 +632,16 @@ class PocketBaseCustom implements INodeType {
 						// ----------------------------------
 						const collection = this.getNodeParameter('collection', i) as string;
 						const recordId = this.getNodeParameter('recordId', i) as string;
+						const expand = this.getNodeParameter('expand', i, '') as string;
+
+						// Prepare options
+						const options: IDataObject = {};
+						if (expand) {
+							options.expand = expand.split(',').map(e => e.trim());
+						}
 
 						// Send the request to get the record
-						const response = await client.collection(collection).getOne(recordId);
+						const response = await client.collection(collection).getOne(recordId, options);
 
 						returnData.push({
 							json: response,
@@ -624,6 +653,7 @@ class PocketBaseCustom implements INodeType {
 						// ----------------------------------
 						const collection = this.getNodeParameter('collection', i) as string;
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						const expand = this.getNodeParameter('expand', i, '') as string;
 
 						const options: IDataObject = {};
 
@@ -636,6 +666,11 @@ class PocketBaseCustom implements INodeType {
 						const sort = this.getNodeParameter('sort', i, '') as string;
 						if (sort) {
 							options.sort = sort;
+						}
+
+						// Add expand option
+						if (expand) {
+							options.expand = expand.split(',').map(e => e.trim());
 						}
 
 						// Handle pagination
@@ -757,6 +792,7 @@ class PocketBaseCustom implements INodeType {
 						for (const tableData of tablesData) {
 							const collection = tableData.collection as string;
 							const filter = tableData.filter as string;
+							const expand = tableData.expand as string;
 							const fields = tableData.fields as string;
 							const limit = tableData.limit as number || 50;
 
@@ -764,6 +800,7 @@ class PocketBaseCustom implements INodeType {
 							const queryOptions: IDataObject = {
 								filter,
 								fields: fields ? fields.split(',').map(f => f.trim()) : undefined,
+								expand: expand ? expand.split(',').map(e => e.trim()) : undefined,
 								perPage: limit,
 							};
 
