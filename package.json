@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-pocketbase-master",
-  "version": "0.1.6",
+  "version": "0.1.8",
   "description": "N8N nodes to integrate with PocketBase like a boss",
   "keywords": [
     "n8n-community-node-package",
@@ -46,7 +46,7 @@
       "dist/credentials/PocketBaseApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/PocketBase/PocketBase.node.js"
+      "dist/nodes/PocketBase/PocketBaseCustom.node.js"
     ],
     "aiNode": true,
     "aiNodeDocumentation": "dist/nodes/PocketBase/README.md",
